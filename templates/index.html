@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps with OpenWeatherMap</title>
+    <style>
+        /* Set the size of the map */
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<h1>My Google Map</h1>
+<div id="map"></div>
+<div id="weather"></div> <!-- This div will show the weather data -->
+
+<script>
+    // OpenWeatherMap API key from Flask
+    const openWeatherAPIKey = '{{ openweather_api_key }}';
+
+    // Initialize and add the map
+    function initMap() {
+        // The location you want to center the map on
+        var location = { lat: 37.7749, lng: -122.4194 }; // Example: San Francisco
+
+        // The map, centered at the chosen location
+        var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 10,
+            center: location
+        });
+
+        // Add a click event listener to the map
+        map.addListener('click', function(event) {
+            var lat = event.latLng.lat();  // Get latitude
+            var lng = event.latLng.lng();  // Get longitude
+            console.log("Coordinates: Latitude: " + lat + ", Longitude: " + lng);
+            
+            // Fetch weather data for the clicked coordinates
+            fetchWeather(lat, lng);
+        });
+    }
+
+    // Function to fetch weather data from OpenWeatherMap API
+    function fetchWeather(lat, lng) {
+        // OpenWeatherMap API URL with the latitude, longitude, and API key
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openWeatherAPIKey}&units=metric`;
+        
+        // Fetch the weather data
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data); // Log the weather data
+                displayWeather(data); // Call function to display weather
+            })
+            .catch(error => console.error('Error fetching weather data:', error));
+    }
+
+    // Function to display weather data in the page
+    function displayWeather(data) {
+        const weatherDiv = document.getElementById('weather');
+        weatherDiv.innerHTML = `
+            <h2>Weather Information</h2>
+            <p>Location: ${data.name}</p>
+            <p>Temperature: ${data.main.temp}°C</p>
+            <p>Weather: ${data.weather[0].description}</p>
+        `;
+    }
+</script>
+
+<!-- Load the Google Maps API -->
+<script>
+    // Google Maps API key from Flask
+    const googleMapsAPIKey = '{{ google_maps_api_key }}';
+
+    // Create the Google Maps script tag
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+
+    // Append the script to the document to load it
+    document.head.appendChild(script);
+</script>
+
+</body>
+</html>

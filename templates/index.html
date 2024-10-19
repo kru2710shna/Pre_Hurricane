@@ -3,96 +3,100 @@
 <head>
     <title>Hurricane Tracker</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        /* Style the map container */
-        #map {
-            height: 500px;
-            width: 100%;
-        }
-    </style>
 </head>
 <body>
 
-<h1>Hurricane Tracker</h1>
-<div id="map"></div>
-<div id="weather"></div> <!-- This div will show the weather data -->
+    <h1>Hurricane Tracker</h1>
+    
+    <!-- Map section -->
+    <div id="map"></div>
+    
+    <!-- Info section with Weather and Chatbot -->
+    <div class="info-container">
+        <div id="weather"></div>  <!-- Weather Information -->
+        <div id="chatbot">
+            <h2>Chatbot Tips</h2>
+            <p>Click a hurricane marker to get safety tips.</p> <!-- Placeholder -->
+        </div>
+    </div>
+    
+    <script>
+        // OpenWeatherMap API key from Flask
+        const openWeatherAPIKey = '{{ openweather_api_key }}';
+    
+        // Sample hurricane data with latitude, longitude, intensity, and radius.
+        // In production, replace with actual data from your CSV.
+        const hurricaneData = [
+            { lat: 29.7604, lng: -95.3698, intensity: 0.8, radius: 70 },  // Example: Houston
+            { lat: 28.7604, lng: -91.3698, intensity: 0.8, radius: 40 },
+            // { lat: 25.7617, lng: -80.1918, intensity: 0.6, radius: 50 },  // Example: Miami
+            // { lat: 34.0522, lng: -118.2437, intensity: 0.5, radius: 40 },  // Example: Los Angeles
+            // { lat: 36.1699, lng: -115.1398, intensity: 0.7, radius: 60 }   // Example: Las Vegas
+        ];
 
-<script>
-    // OpenWeatherMap API key from Flask
-    const openWeatherAPIKey = '{{ openweather_api_key }}';
-
-    // Sample hurricane data (You can replace this with actual hurricane data)
-    const hurricaneData = [
-        { lat: 29.7604, lng: -95.3698, intensity: 0.8 },  // Example: Houston
-        { lat: 25.7617, lng: -80.1918, intensity: 0.6 },  // Example: Miami
-        { lat: 34.0522, lng: -118.2437, intensity: 0.5 }  // Example: Los Angeles
-    ];
-
-    // Initialize and add the map
-    function initMap() {
-        // The location you want to center the map on (Example: San Francisco)
-        var location = { lat: 37.7749, lng: -122.4194 };
-
-        // The map, centered at the chosen location
-        var map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 5,
-            center: location
-        });
-
-        // Add a click event listener to the map
-        map.addListener('click', function(event) {
-            var lat = event.latLng.lat();  // Get latitude
-            var lng = event.latLng.lng();  // Get longitude
-            console.log("Coordinates: Latitude: " + lat + ", Longitude: " + lng);
-            
-            // Fetch weather data for the clicked coordinates
-            fetchWeather(lat, lng);
-        });
-
-        // Add hurricane markers
-        addHurricaneMarkers(map);
-
-        // Add hurricane heatmap
-        addHurricaneHeatmap(map);
-    }
-
-    // Function to add hurricane markers
-    function addHurricaneMarkers(map) {
-        hurricaneData.forEach((hurricane) => {
-            new google.maps.Marker({
-                position: { lat: hurricane.lat, lng: hurricane.lng },
-                map: map,
-                title: `Hurricane (Intensity: ${hurricane.intensity})`
+        // Initialize and add the map
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 5,
+                center: { lat: 29.7604, lng: -95.3698 }  // Example: Centered on Houston
             });
-        });
-    }
 
-    // Function to add a hurricane heatmap
-    function addHurricaneHeatmap(map) {
-        // Convert hurricane data into Google Maps LatLng objects for the heatmap
-        const heatmapData = hurricaneData.map(hurricane => {
-            return {
+            // Draw the hurricane path using Polyline
+            drawHurricanePath(map);
+
+            // Add heatmap based on the hurricane's intensity and size
+            addHurricaneHeatmap(map);
+            
+            // Add click event listener to fetch weather information
+            map.addListener('click', function(event) {
+                var lat = event.latLng.lat();
+                var lng = event.latLng.lng();
+                console.log("Coordinates: Latitude: " + lat + ", Longitude: " + lng);
+                fetchWeather(lat, lng);  // Fetch weather data
+                fetchGeminiTips();
+            });
+        }
+    
+        // Function to draw the hurricane path using Polyline
+        function drawHurricanePath(map) {
+            const pathCoordinates = hurricaneData.map(hurricane => ({
+                lat: hurricane.lat,
+                lng: hurricane.lng
+            }));
+
+            const hurricanePath = new google.maps.Polyline({
+                path: pathCoordinates,
+                geodesic: true,
+                strokeColor: '#FF0000',  // Color of the path
+                strokeOpacity: 1.0,
+                strokeWeight: 2           // Thickness of the line
+            });
+
+            hurricanePath.setMap(map);
+        }
+
+        // Function to add a heatmap based on the hurricane data
+        function addHurricaneHeatmap(map) {
+            // Convert the hurricane data to heatmap format (location + weight)
+            const heatmapData = hurricaneData.map(hurricane => ({
                 location: new google.maps.LatLng(hurricane.lat, hurricane.lng),
-                weight: hurricane.intensity
-            };
-        });
+                weight: hurricane.intensity  // Use intensity to determine weight of heatmap
+            }));
 
-        const heatmap = new google.maps.visualization.HeatmapLayer({
-            data: heatmapData,
-            dissipating: true,
-            radius: 50 // Adjust radius for better visualization
-        });
+            const heatmap = new google.maps.visualization.HeatmapLayer({
+                data: heatmapData,
+                dissipating: true,
+                radius: hurricaneData[0].radius  // Dynamically set the radius based on the first hurricane entry
+            });
 
-        heatmap.setMap(map);
-    }
+            heatmap.setMap(map);
+        }
 
-    // Function to fetch weather data from OpenWeatherMap API
-    function fetchWeather(lat, lng) {
-        // OpenWeatherMap API URL with the latitude, longitude, and API key
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openWeatherAPIKey}&units=metric`;
-
-        // Fetch the weather data
-        fetch(url)
+        // Function to fetch weather data from OpenWeatherMap API
+        function fetchWeather(lat, lng) {
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openWeatherAPIKey}&units=metric`;
+    
+            fetch(url)
             .then(response => response.json())
             .then(data => {
                 console.log(data); // Log the weather data
@@ -100,23 +104,50 @@
             })
             .catch(error => console.error('Error fetching weather data:', error));
     }
+    
+        // Display weather data
+        function displayWeather(data) {
+            const weatherDiv = document.getElementById('weather');
+            weatherDiv.innerHTML = `
+                <h2>Weather Information</h2>
+                <p>Location: ${data.name}</p>
+                <p>Temperature: ${data.main.temp}°C</p>
+                <p>Weather: ${data.weather[0].description}</p>
+            `;
+        }
+    
+        // Function to call Gemini API for tips
+        function fetchGeminiTips() {
+            const chatbotDiv = document.getElementById('chatbot');
+            const userMessage = "What safety tips should I follow during a hurricane?"; // Simulate a question
 
-    // Function to display weather data on the page
-    function displayWeather(data) {
-        const weatherDiv = document.getElementById('weather');
-        weatherDiv.innerHTML = `
-            <h2>Weather Information</h2>
-            <p>Location: ${data.name}</p>
-            <p>Temperature: ${data.main.temp}°C</p>
-            <p>Weather: ${data.weather[0].description}</p>
-        `;
-    }
-</script>
+            // Display a loading message while fetching the response
+            chatbotDiv.innerHTML = `<p>Loading tips...</p>`;
 
-<!-- Load the Google Maps API with visualization library for heatmaps -->
-<script async defer
-    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap&libraries=visualization">
-</script>
-
-</body>
-</html>
+            // Call the Flask backend route for Gemini chatbot
+            fetch('/gemini_chatbot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display chatbot response in the chatbotDiv
+                chatbotDiv.innerHTML = `<p>${data.response}</p>`;
+            })
+            .catch(error => {
+                console.error('Error fetching Gemini tips:', error);
+                chatbotDiv.innerHTML = `<p>Could not retrieve tips at this time.</p>`;
+            });
+        }
+    </script>
+    
+    <!-- Load Google Maps API -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap&libraries=visualization">
+    </script>
+    
+    </body>
+    </html>

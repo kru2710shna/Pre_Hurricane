@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
+# from vapi_python import Vapi
 import google.generativeai as genai
 import os
 
@@ -19,12 +20,14 @@ genai.configure(api_key=gemini_api_key)
 # Route for the index page
 @app.route('/')
 def index():
-    # Get API keys from environment variables
-    openweather_api_key = os.getenv('OPENWEATHERMAP_API_KEY')
-    google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-    
     # Pass the keys to the HTML template
-    return render_template('index.html', openweather_api_key=openweather_api_key, google_maps_api_key=google_maps_api_key)
+    return render_template('index.html',
+                           openweather_api_key=os.getenv('OPENWEATHERMAP_API_KEY'), 
+                           google_maps_api_key=os.getenv('GOOGLE_MAPS_API_KEY'), 
+                           vapi_api_key=os.getenv("VAPI_API_KEY"),
+                           vapi_ass_id=os.getenv("VAPI_ASS_ID")
+                        )
+
 
 # Route for Gemini chatbot to give hurricane tips
 @app.route('/gemini_chatbot', methods=['POST'])
@@ -59,6 +62,6 @@ def gemini_chatbot():
     except Exception as e:
         print(f"Error with Gemini API: {e}")
         return jsonify({"response": "Sorry, something went wrong with the chatbot."}), 500
-
+    
 if __name__ == '__main__':
     app.run(debug=True)

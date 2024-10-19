@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@vapi-ai/web": "^2.1.4"
+  }
+}

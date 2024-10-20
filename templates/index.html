@@ -165,7 +165,7 @@
             <input type="text" id="wind_speed_ratio" class="form-control" placeholder="wind_speed_ratio">
         </div>
         <div class="col-md-4">
-            <input type="text" id="day_night" class="form-control" placeholder="day_night">
+            <input type="hidden" id="day_night" class="form-control" placeholder="day_night">
         </div>
         <button id="predict-btn" class="btn btn-primary mt-2" type="button">Predict Hurricane Status</button>
     </form>
@@ -180,39 +180,112 @@
 
         const openweather_api_key = '{{ openweather_api_key }}';
 
+        let marker;  // Declare marker as a global variable
+
         function initMap() {
-
             map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 5,
-                center: { lat: 29.7604, lng: -95.3698 }
+                zoom: 12,
+                center: { lat: 37.77489065189083, lng: -122.4203473293975 }
             });
-
-            map.addListener('click', function (event) 
-            {
+        
+            map.addListener('click', function (event) {
                 var lat = event.latLng.lat();
                 var lng = event.latLng.lng();
                 
-                // Remove previous circle if it exists
-                if (circle) {
-                    circle.setMap(null);
+                // Remove previous marker if it exists
+                if (marker) {
+                    marker.setMap(null);
                 }
-
-                // Add a new circle with a color fill at the clicked location
-                circle = new google.maps.Circle({
-                    strokeColor: "#FF0000",  // Red border
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: "#FF0000",    // Red fill color
-                    fillOpacity: 0.35,
+            
+                // Add a new marker (pointer) at the clicked location
+                marker = new google.maps.Marker({
+                    position: { lat: lat, lng: lng },
                     map: map,
-                    center: { lat: lat, lng: lng },
-                    radius: 10000  // Radius of 10 kilometers, can be adjusted
+                    title: "Selected Location",
+                    icon: {
+                        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"  // Initial blue marker
+                    }
                 });
+            
+                // Fetch weather information based on the clicked location
+                fetchWeather(lat, lng);
             });
-
-            // Fetch weather information based on the clicked location
-            fetchWeather(lat, lng);
         }
+
+        // Function to map the prediction label to a specific marker color based on the label
+        function getMarkerColorByPrediction(label) {
+            const markerColors = {
+                0: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",  // Greenish for 0-2
+                1: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+                2: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+                3: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png",  // Reddish-red for 3-5
+                4: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+                5: "http://maps.google.com/mapfiles/ms/icons/orange-dot.png",  // Orange for moderate
+                6: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",     // Strong red for 6-9
+                7: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                8: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                9: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+            };
+
+            // Return the marker color based on the prediction label
+            return markerColors[label] || "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";  // Default blue color if label not found
+        }
+
+        // Function to map the prediction label to a specific red shade based on wind speed
+        function getColorByPrediction(label) {
+            const shades = {
+                0: "#FFE5E5",  // Lightest red (Disturbance)
+                1: "#FFCCCC",  // Lighter red (Extratropical Cyclone)
+                2: "#FF6666",  // Medium red (Hurricane)
+                3: "#FF9999",  // Light medium red (Gale Winds)
+                4: "#FFB3B3",  // Subtropical Depression
+                5: "#FF4D4D",  // Subtropical Storm
+                6: "#FF6666",  // Tropical Depression
+                7: "#FF3333",  // Tropical Storm
+                8: "#FFE5E5",  // Clear Sky
+                9: "#FF9999"   // Tropical Wave
+            };
+
+            // Return the color based on the prediction label
+            return shades[label] || "#FFCCCC";  // Default color if label not found
+        }
+
+        // Function to handle prediction result and change marker color
+        function handlePredictionResult(predictionLabel) {
+            const markerColor = getMarkerColorByPrediction(predictionLabel);
+            
+            // Change the marker icon (color) based on the prediction
+            if (marker) {
+                marker.setIcon(markerColor);
+            }
+
+            // Optionally, display prediction information
+            document.getElementById('prediction-result').innerHTML = `
+                <p>Prediction: ${label_mapping[predictionLabel]}</p>
+            `;
+        }
+
+        // Simulated prediction event (replace this with your actual prediction logic)
+        document.getElementById('predict-btn').addEventListener('click', function() {
+            // Example: Assume the prediction label is returned from the backend (e.g., label = 2 for "Hurricane")
+            const predictionLabel = 2;  // Example label (should come from your model)
+            
+            handlePredictionResult(predictionLabel);
+        });
+
+        // Label mapping for predictions
+        const label_mapping = {
+            0: "Disturbance (0-20 mph) - A weak, disorganized system with minimal wind, often the early stage of a developing storm.",
+            1: "Extratropical Cyclone (30-60 mph) - Storms formed outside the tropics, often bringing heavy rain and strong winds.",
+            2: "Hurricane (74+ mph) - A powerful tropical storm with sustained winds above 74 mph, causing significant damage and heavy rainfall.",
+            3: "Gale Winds (39-54 mph) - Strong winds that can cause minor damage, but are not part of a tropical storm or hurricane.",
+            4: "Subtropical Depression (0-38 mph) - A weaker subtropical system with lower wind speeds, a mix of tropical and extratropical characteristics.",
+            5: "Subtropical Storm (39-73 mph) - A storm with both tropical and extratropical characteristics, typically less organized than a hurricane.",
+            6: "Tropical Depression (0-38 mph) - A tropical system with winds below 39 mph, often a precursor to a tropical storm.",
+            7: "Tropical Storm (39-73 mph) - A well-developed tropical system with winds between 39 and 73 mph, less intense than a hurricane.",
+            8: "Clear Sky (0 mph) - Calm weather with no active storm or disturbance.",
+            9: "Tropical Wave (10-30 mph) - A tropical disturbance with low wind speeds, which could develop into a stronger system."
+        };
 
         
         // JavaScript - Geolocation and Map Update Functionality
@@ -221,15 +294,16 @@
                 navigator.geolocation.getCurrentPosition(function(position) {
                     var lat = position.coords.latitude;
                     var lng = position.coords.longitude;
-        
+
                     // Place a marker on the map at the user's current location
                     var userLocation = new google.maps.LatLng(lat, lng);
-                    var marker = new google.maps.Marker({
+                    var userMarker = new google.maps.Marker({
                         position: userLocation,
                         map: map,
-                        title: "Your Location"
+                        title: "Your Location",
+                        icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"  // Green marker for user's location
                     });
-        
+
                     // Center the map at the user's location
                     map.setCenter(userLocation);
                     

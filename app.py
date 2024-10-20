@@ -244,13 +244,22 @@ def calculate_distance_to_land(lat, lon, landmass_coords):
     return min_distance
 
 def get_db_connection():
-    """Create a database connection."""
-    connection = mysql.connector.connect(
-        host=os.getenv('DB_HOST'),# Or Cloud SQL instance IP
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME')
-    )
+    
+    db_config = {
+        'user': '{DB_USER}',
+        'password': '{DB_PASSWORD}',
+        'host': '134.134.183.11',  # Replace with Cloud SQL public IP or use localhost if using Cloud SQL Proxy
+        'port': 3306,
+        'database': 'prehurricane'
+    }
+    
+    try:
+        connection = mysql.connector.connect(**db_config)
+        if connection.is_connected():
+            print("Connected to the database successfully!")
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        
     return connection
 
 

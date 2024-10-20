@@ -1,296 +1,108 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hurricane Tracker</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Inline custom CSS */
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        #chatbot {
+            height: 300px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow-y: scroll;
+            background-color: #f9f9f9;
+        }
+    </style>
 </head>
 
-<body>
+<body class="container">
+    <h1 class="text-center mt-4">Hurricane Tracker</h1>
 
-    <h1>Hurricane Tracker</h1>
-
-    <!-- Map section -->
-    <div id="map"></div>
-
-    <!-- Info section with Weather and Chatbot -->
-
-    <!-- Info section with Weather and Chatbot, now side by side -->
-    <div class="content-container">
-        <!-- Info section with Weather -->
-        <div class="info-container">
-            <div id="weather"></div> <!-- Weather Information -->
+    <!-- Map Section -->
+    <div class="row">
+        <div class="col-md-8">
+            <div id="map"></div>
         </div>
-        <!-- Chatbot Container -->
-        <div id="chatbot-container" class="chatbot-container">
-            <div id="chatbot">
-                <!-- The conversation will be appended here -->
-            </div>
-            <!-- Div where Vapi button will be placed -->
-            <div id="vapiButtonContainer"></div>
-            <!-- Microphone to activate VapiAI -->
-            <!-- <div class="microphone" id="microphoneIcon">
-                <img src="https://img.icons8.com/ios-filled/50/ffffff/microphone.png" alt="Microphone">
-            </div> -->
+        <div class="col-md-4">
+            <div id="weather" class="p-3"></div>
         </div>
     </div>
 
+    <!-- Chatbot Section -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div id="chatbot"></div>
+            <input type="text" id="question" class="form-control mt-2" placeholder="Ask a question about hurricanes">
+            <button id="ask-btn" class="btn btn-primary mt-2">Ask Gemini</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script>
-        // OpenWeatherMap API key from Flask
-        const openWeatherAPIKey = '{{ openweather_api_key }}';
+        const openweather_api_key = '{{ openweather_api_key }}';
 
-        // Sample hurricane data with latitude, longitude, intensity, and radius.
-        // In production, replace with actual data from your CSV.
-        const hurricaneData = [
-            { lat: 29.7604, lng: -95.3698, intensity: 0.8, radius: 70 },  // Example: Houston
-            { lat: 28.7604, lng: -91.3698, intensity: 0.8, radius: 40 },
-            // { lat: 25.7617, lng: -80.1918, intensity: 0.6, radius: 50 },  // Example: Miami
-            // { lat: 34.0522, lng: -118.2437, intensity: 0.5, radius: 40 },  // Example: Los Angeles
-            // { lat: 36.1699, lng: -115.1398, intensity: 0.7, radius: 60 }   // Example: Las Vegas
-        ];
-
-        // Initialize and add the map
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 5,
-                center: { lat: 29.7604, lng: -95.3698 }  // Example: Centered on Houston
+                center: { lat: 29.7604, lng: -95.3698 }
             });
 
-            // Draw the hurricane path using Polyline
-            drawHurricanePath(map);
-
-            // Add heatmap based on the hurricane's intensity and size
-            addHurricaneHeatmap(map);
-
-            // Add click event listener to fetch weather information
             map.addListener('click', function (event) {
                 var lat = event.latLng.lat();
                 var lng = event.latLng.lng();
-                console.log("Coordinates: Latitude: " + lat + ", Longitude: " + lng);
-                fetchWeather(lat, lng);  // Fetch weather data
-                // fetchGeminiTips();
+                fetchWeather(lat, lng);
             });
         }
 
-        // Function to draw the hurricane path using Polyline
-        function drawHurricanePath(map) {
-            const pathCoordinates = hurricaneData.map(hurricane => ({
-                lat: hurricane.lat,
-                lng: hurricane.lng
-            }));
-
-            const hurricanePath = new google.maps.Polyline({
-                path: pathCoordinates,
-                geodesic: true,
-                strokeColor: '#FF0000',  // Color of the path
-                strokeOpacity: 1.0,
-                strokeWeight: 2           // Thickness of the line
-            });
-
-            hurricanePath.setMap(map);
-        }
-
-        // Function to add a heatmap based on the hurricane data
-        function addHurricaneHeatmap(map) {
-            // Convert the hurricane data to heatmap format (location + weight)
-            const heatmapData = hurricaneData.map(hurricane => ({
-                location: new google.maps.LatLng(hurricane.lat, hurricane.lng),
-                weight: hurricane.intensity  // Use intensity to determine weight of heatmap
-            }));
-
-            const heatmap = new google.maps.visualization.HeatmapLayer({
-                data: heatmapData,
-                dissipating: true,
-                radius: hurricaneData[0].radius  // Dynamically set the radius based on the first hurricane entry
-            });
-
-            heatmap.setMap(map);
-        }
-
-        // Function to fetch weather data from OpenWeatherMap API
         function fetchWeather(lat, lng) {
-            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openWeatherAPIKey}&units=metric`;
-
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openweather_api_key}&units=metric`;
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data); // Log the weather data
-                    displayWeather(data); // Call function to display weather
+                    document.getElementById('weather').innerHTML = `
+                        <h5>Weather Information</h5>
+                        <p>Location: ${data.name}</p>
+                        <p>Temperature: ${data.main.temp}°C</p>
+                        <p>Weather: ${data.weather[0].description}</p>
+                    `;
                 })
                 .catch(error => console.error('Error fetching weather data:', error));
         }
 
-        // Display weather data
-        function displayWeather(data) {
-            const weatherDiv = document.getElementById('weather');
-            weatherDiv.innerHTML = `
-                <h2>Weather Information</h2>
-                <p>Location: ${data.name}</p>
-                <p>Temperature: ${data.main.temp}°C</p>
-                <p>Weather: ${data.weather[0].description}</p>
-            `;
-        }
-    </script>
-    <!-- VapiAI Integration -->
-    <script>
-        var vapiInstance = null;
-        const assistant = {
-            transcriber: {
-                provider: "deepgram",
-                model: "nova-2",      // Use Deepgram's nova-2 model for transcription
-                language: "en",       // English language
-                smartFormat: true,   // Disable smart formatting for transcriptions
-                keywords: ["hurricane", "safety"] // Optional keywords to focus on
-            },
-            model: {
-                provider: "openai",
-                model: "gpt-4o",
-                systemPrompt: "You're a versatile AI assistant named Vapi who is fun to talk with.",
-            },
-            voice: {
-                provider: "11labs",
-                voiceId: "paula",
-            },
-            firstMessage: "Hi, I am Vapi, how can I assist you today?",
-        };
-
-        const buttonConfig = {
-            // position: "bottom-right",  // Center it at the bottom
-            // offset: "0px",             // Slight offset to adjust distance from the bottom
-            idle: {
-                color: "rgb(93, 254, 202)",
-                type: "round",  // Using round for the microphone icon
-                icon: "https://img.icons8.com/ios-filled/50/ffffff/microphone.png"  // Microphone icon
-            },
-            loading: {
-                color: "rgb(93, 124, 202)",
-                type: "round",
-                icon: "https://unpkg.com/lucide-static@0.321.0/icons/loader-2.svg",
-            },
-            active: {
-                color: "rgb(255, 0, 0)",
-                type: "round",
-                icon: "https://unpkg.com/lucide-static@0.321.0/icons/phone-off.svg",
-            },
-        };
-        (function (d, t) {
-            var g = document.createElement(t),
-                s = d.getElementsByTagName(t)[0];
-            g.src =
-                "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
-            g.defer = true;
-            g.async = true;
-            s.parentNode.insertBefore(g, s);
-
-            g.onload = function () {
-                vapiInstance = window.vapiSDK.run({
-                    apiKey: '{{ vapi_api_key }}',
-                    assistant: assistant,
-                    // assistant: '{{ vapi_ass_id }}',
-                    config: buttonConfig,
-                });
-                vapiInstance.on('speech-start', () => {
-                    console.log('Speech has started');
-                });
-
-                vapiInstance.on('speech-end', () => {
-                    console.log('Speech has ended');
-                });
-                
-                vapiInstance.on('call-start', () => {
-                    console.log('Call has started');
-                });
-                vapiInstance.on('call-end', () => {
-                    console.log('Call has stopped');
-                    fetchTranscript();
-                    fetchGeminiResponse();
-                });
-                vapiInstance.on('volume-level', (volume) => {
-                    console.log(`Assistant volume level: ${volume}`);
-                });
-
-                vapiInstance.on('message', (message) => {
-                    console.log(message);
-                });
-
-                vapiInstance.on('error', (e) => {
-                    console.error(e);
-                });
-            };
-        })(document, "script");
-        // Function to fetch transcript after the call ends
-        function fetchTranscript(callId) {
-            fetch(`/calls/${callId}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer YOUR_API_TOKEN`,  // Replace with your Vapi API token
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.transcript) {
-                    const transcriptText = data.transcript;  // Retrieve the transcript
-                    appendMessageToChatbot('User', transcriptText);  // Append transcript as User message
-                } else {
-                    console.error('No transcript found');
-                }
-            })
-            .catch(error => console.error('Error fetching transcript:', error));
-        }
-
-        // Function to fetch a response from Google Gemini API
-        function fetchGeminiResponse() {
+        document.getElementById('ask-btn').addEventListener('click', function() {
+            const question = document.getElementById('question').value;
             fetch('/gemini_chatbot', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: 'What should I do during a hurricane?' })
-            })
-                .then(response => response.json())
-                .then(data => appendMessageToChatbot('AI Assistant', data.response))
-                .catch(error => appendMessageToChatbot('Error', 'Failed to retrieve response.'));
-        }
-
-        // Fetch the transcript from your Flask backend
-        function fetchTranscript(callId) {
-            if (!callId) {
-                console.error("Call ID is undefined!");
-                return;
-            }
-            fetch(`/get_transcript/${callId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                body: JSON.stringify({ question })
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Transcript fetched:', data);
-                if (data.transcript) {
-                    const transcriptText = data.transcript;  // Retrieve the transcript
-                    appendMessageToChatbot('User', transcriptText);  // Append transcript as User message
-                } else {
-                    console.error('No transcript found');
-                }
+                const chatbotDiv = document.getElementById('chatbot');
+                chatbotDiv.innerHTML += `<div><strong>User:</strong> ${question}</div>`;
+                chatbotDiv.innerHTML += `<div><strong>Gemini:</strong> ${data.response}</div>`;
+                chatbotDiv.scrollTop = chatbotDiv.scrollHeight;
             })
-            .catch(error => console.error('Error fetching transcript:', error));
-        }
-
-        // Function to append chatbot messages
-        function appendMessageToChatbot(speaker, message) {
-        const chatbotDiv = document.getElementById('chatbot');
-        const messageDiv = document.createElement('div');
-        messageDiv.innerHTML = `<strong>${speaker}:</strong> ${message}`;
-        chatbotDiv.appendChild(messageDiv);
-        chatbotDiv.scrollTop = chatbotDiv.scrollHeight;
-        }
+            .catch(error => console.error('Error:', error));
+        });
     </script>
+
     <!-- Load Google Maps API -->
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap&libraries=visualization">
-        </script>
+    </script>
 
-
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-
 </html>

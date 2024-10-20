@@ -10,8 +10,8 @@ from geopy.distance import geodesic
 import pandas as pd
 
 
-model = joblib.load("/Users/krushna/Downloads/best_random_forest_model4.pkl")
-preprocessor = joblib.load("/Users/krushna/Downloads/preprocessor4.pkl")
+model = joblib.load("best_random_forest_model4.pkl")
+preprocessor = joblib.load("preprocessor4.pkl")
 
 # Load environment variables from .env
 load_dotenv()

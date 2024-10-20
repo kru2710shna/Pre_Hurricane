@@ -39,3 +39,43 @@ The National Hurricane Center (NHC) conducts post-storm analysis of tropical cyc
 
 ## Conclusion
 The Pre-Hurricane Alarm system provides a crucial tool for early detection and disaster preparedness. By leveraging advanced machine learning techniques and rich hurricane datasets, this project aims to minimize the catastrophic impact of hurricanes, safeguarding lives and infrastructure.
+
+
+STEPS: 
+
+=> Open your terminal and clone the repository using:
+git clone <repository_url>
+cd <project_directory>
+
+=> Create the virtual environment:
+python -m venv venv
+
+=> Activate the virtual environment:
+
+Windows:
+venv\Scripts\activate
+
+macOS/Linux:
+source venv/bin/activate
+
+=> Run the following to install all the required packages:
+pip install -r requirements.txt
+
+=> Create a .env file in the project root:
+touch .env
+
+=> .env file variables
+GEMINI_API_KEY = {GEMINI API KEY}
+OPENWEATHER_API_KEY = {OPENWEATHER API KEY}
+GOOGLE_MAPS_API_KEY = {GOOGLE MAPS API KEY}
+DB_HOST = {GCP CLOUD PUBLIC IP}
+DB_USER = {GCP CLOUD DB USER}
+DB_PASSWORD = {GCP CLOUD DATABASE PASSWORD}
+DB_NAME = {GCP CLOUD DATABASE NAME}
+CLOUD_SQL_CONNECTION_NAME = {GCP CLOUD CONNECTION NAME}
+
+
+=> Run python file
+python app.py
+
+

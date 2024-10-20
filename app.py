@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, redirect, jsonify
 from dotenv import load_dotenv
 import google.generativeai as genai
 import requests
@@ -8,8 +8,21 @@ import numpy as np
 import joblib
 from geopy.distance import geodesic
 import pandas as pd
+import mysql.connector
 
 
+# Function to establish a connection to the Cloud SQL database
+# def get_db_connection():
+#     connection = mysql.connector.connect(
+#         user=os.getenv('DB_USER'),
+#         password=os.getenv('DB_PASSWORD'),
+#         host=os.getenv('DB_HOST'),  # Use /cloudsql/project:region:instance for Unix socket connection
+#         database=os.getenv('DB_NAME')
+#     )
+#     return connection
+
+    
+    
 model = joblib.load("best_random_forest_model4.pkl")
 preprocessor = joblib.load("preprocessor4.pkl")
 
@@ -81,6 +94,8 @@ def gemini_chatbot():
         return jsonify(
             {"response": "Sorry, something went wrong with the chatbot."}
         ), 500
+    
+
 
 
 @app.route("/predict_status", methods=["POST"])
@@ -228,6 +243,39 @@ def calculate_distance_to_land(lat, lon, landmass_coords):
 
     return min_distance
 
+def get_db_connection():
+    """Create a database connection."""
+    connection = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),# Or Cloud SQL instance IP
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
+    )
+    return connection
+
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    try:
+        name = request.form['name']
+        email = request.form['email']
+        phone = request.form['phone']
+        print(f"Received form data: Name={name}, Email={email}, Phone={phone}")
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        query = "INSERT INTO subscribers (name, email, phone) VALUES (%s, %s, %s)"
+        cursor.execute(query, (name, email, phone))
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return redirect('/')
+    except Exception as e:
+        print(f"Error: {e}")
+        return "An error occurred while subscribing.", 500
 
 if __name__ == "__main__":
     app.run(debug=True)

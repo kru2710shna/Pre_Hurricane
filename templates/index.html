@@ -1,32 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hurricane Tracker</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        /* Inline custom CSS */
-        #map {
-            height: 400px;
-            width: 100%;
-        }
-        #chatbot {
-            height: 300px;
-            border: 1px solid #ddd;
-            padding: 10px;
-            overflow-y: scroll;
-            background-color: #f9f9f9;
-        }
-        body{
-            width: 100%;
-        }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pre-Hurricane Alarm</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    
+        <style>
+            /* Inline custom CSS */
+            #map {
+                height: 400px;
+                width: 100%;
+            }
+            #chatbot {
+                height: 300px;
+                border: 1px solid #ddd;
+                padding: 10px;
+                overflow-y: scroll;
+                background-color: #f9f9f9;
+            }
+            body {
+                width: 100%;
+            }
+            .description {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 1.1rem;
+                color: #555;
+            }
+            .center-btn {
+                display: flex;
+                justify-content: center;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    
 
 <body class="container">
+
+
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="#">Hurricane Tracker</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,24 +55,30 @@
             </ul>
         </div>
     </nav>
-    <h1 class="text-center mt-4">Hurricane Tracker</h1>
 
+    
+
+    <!-- Step 1: Title and Map -->
+    <h1 class="text-center mt-4">Pre-Hurricane Alarm</h1>
+    
     <!-- Map Section -->
-    <div class="row">
-        <div class="col-md-8">
-            <div id="map"></div>
-        </div>
-        <div class="col-md-4">
-            <div id="weather" class="p-3"></div>
-        </div>
+    <div id="map" class="mt-4"></div>
+
+   
+
+    <!-- Step 2: Button and Description -->
+    <div class="center-btn">
+        <button id="location-btn" class="btn btn-secondary mt-3">Get Connected</button>
     </div>
 
-    <div id="weather" class="p-3">
+    <div class="description">Point on the MAP to fetch the information.</div>
+
+    <button id="copy-info-btn" class="btn btn-info mt-2" style="display: none;">Copy Information</button> 
+
+    <!-- Weather Information Section -->
+    <div id="weather" class="p-3 mt-4"></div>
 
 
-    <!-- HTML - Button below the map -->
-    <button id="location-btn" class="btn btn-secondary mt-2">Get Connected</button>
-    <button id="copy-info-btn" class="btn btn-info mt-2" style="display: none;">Copy Information</button>
 
     <!-- Chatbot Section -->
     <div class="row mt-4">
@@ -100,18 +121,18 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="subscribe-form">
+                    <form id="subscribe-form" method="POST">
                         <div class="form-group">
                             <label for="name">Name:</label>
-                            <input type="text" class="form-control" id="name" required>
+                            <input type="text" class="form-control" id="name" name="name" required>
                         </div>
                         <div class="form-group">
                             <label for="email">Email:</label>
-                            <input type="email" class="form-control" id="email" required>
+                            <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                         <div class="form-group">
                             <label for="phone">Phone Number:</label>
-                            <input type="tel" class="form-control" id="phone" required>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
                         </div>
                         <button type="submit" class="btn btn-success">Submit</button>
                     </form>
@@ -123,7 +144,7 @@
 
 
 
-    <!-- Weather Input Section -->
+    <!-- Weather Input Form -->
     <form class="row mt-4" id="hurricane-form">
         <div class="col-md-4">
             <input type="text" id="wind_speed" class="form-control" placeholder="Wind Speed (km/h)" required pattern="\d+(\.\d{1,2})?" title="Please enter a valid number for wind speed.">
@@ -135,21 +156,20 @@
             <input type="text" id="distance_to_land" class="form-control" placeholder="Distance to Land (km)" required pattern="\d+(\.\d{1,2})?" title="Please enter a valid number for distance to land.">
         </div>
         <div class="col-md-4">
-            <input type="text" id="latitude" class="form-control" placeholder="Latitude" >
+            <input type="text" id="latitude" class="form-control" placeholder="Latitude">
         </div>
         <div class="col-md-4">
-            <input type="text" id="longitude" class="form-control" placeholder="Longitude" >
+            <input type="text" id="longitude" class="form-control" placeholder="Longitude">
         </div>
-
         <div class="col-md-4">
-            <input type="text" id="wind_speed_ratio" class="form-control" placeholder="wind_speed_ratio" >
+            <input type="text" id="wind_speed_ratio" class="form-control" placeholder="wind_speed_ratio">
         </div>
-        <input type="text" id="day_night" class="form-control" placeholder="day_night">
+        <div class="col-md-4">
+            <input type="text" id="day_night" class="form-control" placeholder="day_night">
+        </div>
         <button id="predict-btn" class="btn btn-primary mt-2" type="button">Predict Hurricane Status</button>
     </form>
     
-
-
     <div id="prediction-result" class="mt-4"></div>
 
     <!-- Scripts -->
@@ -352,18 +372,15 @@
 
         document.getElementById('subscribe-form').addEventListener('submit', function(event) {
             event.preventDefault();
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-
-            fetch('/send-notification', {
+            const formData = new FormData(this);  // Use FormData to gather form input
+            
+            fetch('/subscribe', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone })
+                body: new URLSearchParams(formData)  // Use URLSearchParams to encode form data
             })
-            .then(response => response.json())
+            .then(response => response.text())
             .then(data => {
-                alert(data.message || 'Thank you for subscribing!');
+                alert('Thank you for subscribing!');
                 document.getElementById('subscribe-form').reset();
                 $('#notificationModal').modal('hide');
             })

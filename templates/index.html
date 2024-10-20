@@ -174,20 +174,46 @@
 
     <!-- Scripts -->
     <script>
+
+        let map;  // Declare map as a global variable
+        let circle;
+
         const openweather_api_key = '{{ openweather_api_key }}';
 
         function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
+
+            map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 5,
                 center: { lat: 29.7604, lng: -95.3698 }
             });
 
-            map.addListener('click', function (event) {
+            map.addListener('click', function (event) 
+            {
                 var lat = event.latLng.lat();
                 var lng = event.latLng.lng();
-                fetchWeather(lat, lng);
+                
+                // Remove previous circle if it exists
+                if (circle) {
+                    circle.setMap(null);
+                }
+
+                // Add a new circle with a color fill at the clicked location
+                circle = new google.maps.Circle({
+                    strokeColor: "#FF0000",  // Red border
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: "#FF0000",    // Red fill color
+                    fillOpacity: 0.35,
+                    map: map,
+                    center: { lat: lat, lng: lng },
+                    radius: 10000  // Radius of 10 kilometers, can be adjusted
+                });
             });
+
+            // Fetch weather information based on the clicked location
+            fetchWeather(lat, lng);
         }
+
         
         // JavaScript - Geolocation and Map Update Functionality
         document.getElementById('location-btn').addEventListener('click', function() {

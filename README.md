@@ -44,32 +44,41 @@ The Pre-Hurricane Alarm system provides a crucial tool for early detection and d
 STEPS: 
 
 => Open your terminal and clone the repository using:
-
+```bash
 git clone <repository_url>
 cd <project_directory>
+```
 
 => Create the virtual environment:
-
+```bash
 python -m venv venv
+```
 
 => Activate the virtual environment:
 
 Windows:
+```bash
 venv\Scripts\activate
+```
 
 macOS/Linux:
+```bash
 source venv/bin/activate
+```
 
 => Run the following to install all the required packages:
 
+```bash
 pip install -r requirements.txt
+```
 
 => Create a .env file in the project root:
 
+```bash
 touch .env
-
+```
 => .env file variables
-
+```bash
 GEMINI_API_KEY = {GEMINI API KEY}
 OPENWEATHER_API_KEY = {OPENWEATHER API KEY}
 GOOGLE_MAPS_API_KEY = {GOOGLE MAPS API KEY}
@@ -78,10 +87,13 @@ DB_USER = {GCP CLOUD DB USER}
 DB_PASSWORD = {GCP CLOUD DATABASE PASSWORD}
 DB_NAME = {GCP CLOUD DATABASE NAME}
 CLOUD_SQL_CONNECTION_NAME = {GCP CLOUD CONNECTION NAME}
-
+```
 
 => Run python file
 
+```bash
 python app.py
+```
 
+Thank you so much! 
 

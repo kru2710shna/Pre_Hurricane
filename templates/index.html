@@ -24,6 +24,19 @@
 </head>
 
 <body class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Hurricane Tracker</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-toggle="modal" data-target="#aboutModal">About</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
     <h1 class="text-center mt-4">Hurricane Tracker</h1>
 
     <!-- Map Section -->
@@ -36,14 +49,105 @@
         </div>
     </div>
 
+    <div id="weather" class="p-3">
+
+
+    <!-- HTML - Button below the map -->
+    <button id="location-btn" class="btn btn-secondary mt-2">Get Connected</button>
+    <button id="copy-info-btn" class="btn btn-info mt-2" style="display: none;">Copy Information</button>
+
     <!-- Chatbot Section -->
     <div class="row mt-4">
         <div class="col-md-12">
             <div id="chatbot"></div>
-            <input type="text" id="question" class="form-control mt-2" placeholder="Ask a question about hurricanes">
+            <input type="text" id="question" class="form-control mt-2" placeholder="Trained on Hurricane Data">
             <button id="ask-btn" class="btn btn-primary mt-2">Ask Gemini</button>
         </div>
     </div>
+
+    <!-- Weather Modal -->
+    <div class="modal fade" id="weatherModal" tabindex="-1" role="dialog" aria-labelledby="weatherModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="weatherModalLabel">Weather Information</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <div id="weatherstatus"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-primary" id="yes-btn">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Form Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" role="dialog" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationModalLabel">Subscribe for Notifications</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="subscribe-form">
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number:</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Weather Input Section -->
+    <form class="row mt-4" id="hurricane-form">
+        <div class="col-md-4">
+            <input type="text" id="wind_speed" class="form-control" placeholder="Wind Speed (km/h)" required pattern="\d+(\.\d{1,2})?" title="Please enter a valid number for wind speed.">
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="pressure" class="form-control" placeholder="Pressure (mb)" required pattern="\d+(\.\d{1,2})?" title="Please enter a valid number for pressure.">
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="distance_to_land" class="form-control" placeholder="Distance to Land (km)" required pattern="\d+(\.\d{1,2})?" title="Please enter a valid number for distance to land.">
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="latitude" class="form-control" placeholder="Latitude" >
+        </div>
+        <div class="col-md-4">
+            <input type="text" id="longitude" class="form-control" placeholder="Longitude" >
+        </div>
+
+        <div class="col-md-4">
+            <input type="text" id="wind_speed_ratio" class="form-control" placeholder="wind_speed_ratio" >
+        </div>
+        <input type="text" id="day_night" class="form-control" placeholder="day_night">
+        <button id="predict-btn" class="btn btn-primary mt-2" type="button">Predict Hurricane Status</button>
+    </form>
+    
+
+
+    <div id="prediction-result" class="mt-4"></div>
 
     <!-- Scripts -->
     <script>
@@ -61,21 +165,131 @@
                 fetchWeather(lat, lng);
             });
         }
+        
+        // JavaScript - Geolocation and Map Update Functionality
+        document.getElementById('location-btn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+        
+                    // Place a marker on the map at the user's current location
+                    var userLocation = new google.maps.LatLng(lat, lng);
+                    var marker = new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: "Your Location"
+                    });
+        
+                    // Center the map at the user's location
+                    map.setCenter(userLocation);
+                    
+                    // Pass the user's coordinates to fetchWeather()
+                    fetchWeather(lat, lng);
+                }, function() {
+                    alert('Location access denied or unavailable.');
+                });
+            } else {
+                alert('Geolocation is not supported by this browser.');
+            }
+        });
+
+        let currentWeatherData = {};  // Store the current weather data globally
 
         function fetchWeather(lat, lng) {
             const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${openweather_api_key}&units=metric`;
+            
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('weather').innerHTML = `
-                        <h5>Weather Information</h5>
-                        <p>Location: ${data.name}</p>
-                        <p>Temperature: ${data.main.temp}°C</p>
-                        <p>Weather: ${data.weather[0].description}</p>
-                    `;
+                    const dt = data.dt;
+                    const timezoneOffset = data.timezone;
+                    const windSpeed = data.wind.speed;
+                    const seaLevelPressure = data.main.pressure;
+        
+                    const utcTime = new Date(dt * 1000);  
+                    const localTime = new Date(utcTime.getTime() + timezoneOffset * 1000);
+                    
+                    const sunrise = new Date((data.sys.sunrise + timezoneOffset) * 1000);  // Apply timezone offset
+                    const sunset = new Date((data.sys.sunset + timezoneOffset) * 1000);    // Apply timezone offset
+
+                    const isDay = localTime >= sunrise && localTime < sunset ? "Day" : "Night";
+                    const options = { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit', 
+                        hour12: true
+                    };
+                    const localTimeStr = localTime.toLocaleString('en-US', options);
+        
+                    fetch(`/get_distance_to_land?lat=${lat}&lng=${lng}`)
+                        .then(response => response.json())
+                        .then(distanceData => {
+                            const distanceToLand = distanceData.distance_to_land;
+        
+                            currentWeatherData = {
+                                local_time: localTimeStr,
+                                wind_speed: (windSpeed * 3.6).toFixed(2),  // Convert m/s to km/h
+                                sea_level_pressure: seaLevelPressure,
+                                distance_to_land: distanceToLand.toFixed(2),
+                                lat: lat,   // Add latitude to currentWeatherData
+                                lng: lng,    // Add longitude to currentWeatherData
+                                is_day: isDay
+                            };
+        
+                            document.getElementById('weather').innerHTML = `
+                                <h5>Weather Information</h5>
+                                <p>Temperature: ${data.main.temp}°C</p>
+                                <p>Weather: ${data.weather[0].description}</p>
+                                <p>Local Time: ${localTimeStr}</p>
+                                <p>Wind Speed: ${currentWeatherData.wind_speed} km/h</p>
+                                <p>Sea Level Pressure: ${seaLevelPressure} mb</p>
+                                <p>Distance to Nearest Land: ${currentWeatherData.distance_to_land} km</p>
+                                <p>It is currently: ${currentWeatherData.is_day}</p>
+                            `;
+        
+                            // Make the "Copy Information" button visible
+                            document.getElementById('copy-info-btn').style.display = 'inline-block';
+                        })
+                        .catch(error => console.error('Error fetching distance to land:', error));
                 })
                 .catch(error => console.error('Error fetching weather data:', error));
         }
+
+
+
+        // JavaScript - Copy Information Button Click Handler
+        document.getElementById('copy-info-btn').addEventListener('click', function() {
+            // Check if currentWeatherData has been populated
+            if (Object.keys(currentWeatherData).length > 0) {
+                // Populate the form fields with the weather information
+                document.getElementById('wind_speed').value = currentWeatherData.wind_speed;
+                document.getElementById('pressure').value = currentWeatherData.sea_level_pressure;
+                document.getElementById('distance_to_land').value = currentWeatherData.distance_to_land;
+
+                // Also populate latitude and longitude fields
+                document.getElementById('latitude').value = currentWeatherData.lat;
+                document.getElementById('longitude').value = currentWeatherData.lng;
+                document.getElementById('wind_speed_ratio').value = currentWeatherData.wind_speed/currentWeatherData.sea_level_pressure;
+                document.getElementById('day_night').value = (currentWeatherData.is_day=='Day')?1:0;
+                //console.log("Latitude:", lat, "Longitude:", lng);
+
+                // Optionally show a message to confirm the information is copied
+                //if None in [lat, lng, wind_speed, pressure, distance_to_land]:
+                    //return jsonify({"error": "Missing required inputs"}), 400
+
+                alert("Information copied to the form!");
+
+            } else {
+                // If data hasn't been fetched, show an alert
+                alert("No weather information available to copy.");
+            }
+        });
+
 
         document.getElementById('ask-btn').addEventListener('click', function() {
             const question = document.getElementById('question').value;
@@ -93,6 +307,67 @@
             })
             .catch(error => console.error('Error:', error));
         });
+
+        document.getElementById('predict-btn').addEventListener('click', function(event) {
+            event.preventDefault();  // Prevent form submission
+    
+            const form = document.getElementById('hurricane-form');
+            
+            // Check if the form is valid before submitting
+            if (form.checkValidity()) {
+                const windSpeed = document.getElementById('wind_speed').value;
+                const pressure = document.getElementById('pressure').value;
+                const distanceToLand = document.getElementById('distance_to_land').value;
+                const latitude = document.getElementById('latitude').value;
+                const longitude = document.getElementById('longitude').value;
+                const wind_speed_ratio = windSpeed / pressure;
+                const day_night = document.getElementById('day_night').value;
+    
+                // Send the data to backend or perform any other action
+                fetch('/predict_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ windSpeed, pressure, distanceToLand, latitude, longitude, wind_speed_ratio, day_night })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response (e.g., display prediction)
+                    $('#weatherModal').modal('show');
+                    $('#weatherstatus').text(data.status);
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                // Show validation error if the form is invalid
+                form.reportValidity();
+            }
+        });
+
+        document.getElementById('yes-btn').addEventListener('click', function() {
+            $('#weatherModal').modal('hide');
+            $('#notificationModal').modal('show');
+        });
+
+        document.getElementById('subscribe-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            fetch('/send-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, phone })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || 'Thank you for subscribing!');
+                document.getElementById('subscribe-form').reset();
+                $('#notificationModal').modal('hide');
+            })
+            .catch(error => console.error('Error:', error));
+        });
+ 
+
     </script>
 
     <!-- Load Google Maps API -->
@@ -103,6 +378,14 @@
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+
+
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

@@ -73,8 +73,6 @@
 
     <div class="description">Point on the MAP to fetch the information.</div>
 
-    <button id="copy-info-btn" class="btn btn-info mt-2" style="display: none;">Copy Information</button> 
-
     <!-- Weather Information Section -->
     <div id="weather" class="p-3 mt-4"></div>
 
@@ -83,10 +81,16 @@
     <!-- Chatbot Section -->
     <div class="row mt-4">
         <div class="col-md-12">
-            <div id="chatbot"></div>
-            <input type="text" id="question" class="form-control mt-2" placeholder="Trained on Hurricane Data">
             <button id="ask-btn" class="btn btn-primary mt-2">Ask Gemini</button>
+            <input type="text" id="question" class="form-control mt-2" placeholder="Trained on Hurricane Data">
+            <div id="chatbot"></div>
+
         </div>
+    </div>
+
+
+    <div class="container mt-3">
+        <button id="copy-info-btn" class="btn btn-info" style="display: none;">Copy Information</button> 
     </div>
 
     <!-- Weather Modal -->

@@ -163,3 +163,5 @@ cython_debug/
 
 # Node Stuff
 node_modules/
+
+config/*

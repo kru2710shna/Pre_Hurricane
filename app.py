@@ -10,6 +10,9 @@ from geopy.distance import geodesic
 import pandas as pd
 import mysql.connector
 from flask_mail import Mail, Message
+from email_templates import subscription_thank_you_message
+
+
    
 app = Flask(__name__)
 # Load environment variables from .env
@@ -276,13 +279,15 @@ def subscribe():
         cursor.close()
         connection.close()
 
-        # Send email notification
-        msg = Message("Hurricane Prediction Alert Subscription",
-                      sender=os.getenv("MAIL_USERNAME"),
-                      recipients=[email])
-        msg.body = f"Hello {name},\n\nThank you for subscribing to hurricane alerts!"
+        # Generate and send the thank-you email
+        msg = Message(
+            subject="Hurricane Prediction Alert Subscription",
+            sender=os.getenv("MAIL_USERNAME"),
+            recipients=[email]
+        )
+        msg.body = subscription_thank_you_message(name)
         mail.send(msg)
-        print("Email sent successfully!")
+        print("Thank you email sent successfully!")
 
         return redirect('/')
 

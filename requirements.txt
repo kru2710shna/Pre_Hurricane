@@ -7,4 +7,5 @@ joblib==1.4.0
 geopy==2.3.0
 pandas==2.1.2
 mysql-connector-python==8.1.0
-gunicorn==21.2.0  # If you're deploying and using Gunicorn as a WSGI server
+gunicorn==21.2.0  
+Flask-Mail

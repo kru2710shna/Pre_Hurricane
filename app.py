@@ -9,27 +9,24 @@ import joblib
 from geopy.distance import geodesic
 import pandas as pd
 import mysql.connector
-
-
-# Function to establish a connection to the Cloud SQL database
-# def get_db_connection():
-#     connection = mysql.connector.connect(
-#         user=os.getenv('DB_USER'),
-#         password=os.getenv('DB_PASSWORD'),
-#         host=os.getenv('DB_HOST'),  # Use /cloudsql/project:region:instance for Unix socket connection
-#         database=os.getenv('DB_NAME')
-#     )
-#     return connection
-
+from flask_mail import Mail, Message
+   
+app = Flask(__name__)
+# Load environment variables from .env
+load_dotenv()
     
     
 model = joblib.load("best_random_forest_model4.pkl")
 preprocessor = joblib.load("preprocessor4.pkl")
+# Configure Flask-Mail
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+app.config["MAIL_PORT"] = os.getenv("MAIL_PORT")
+app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+mail = Mail(app)
 
-# Load environment variables from .env
-load_dotenv()
 
-app = Flask(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 openweather_api_key = os.getenv("openweather_api_key")
@@ -57,8 +54,6 @@ def index():
 
 
 # Route for Gemini chatbot to give hurricane tips
-
-
 @app.route("/gemini_chatbot", methods=["POST"])
 def gemini_chatbot():
     data = request.get_json()
@@ -266,25 +261,39 @@ def get_db_connection():
 @app.route('/subscribe', methods=['POST'])
 def subscribe():
     try:
+        # Extract form data
         name = request.form['name']
         email = request.form['email']
         phone = request.form['phone']
         print(f"Received form data: Name={name}, Email={email}, Phone={phone}")
 
+        # Save data to the database
         connection = get_db_connection()
         cursor = connection.cursor()
-
         query = "INSERT INTO subscribers (name, email, phone) VALUES (%s, %s, %s)"
         cursor.execute(query, (name, email, phone))
         connection.commit()
-
         cursor.close()
         connection.close()
 
+        # Send email notification
+        msg = Message("Hurricane Prediction Alert Subscription",
+                      sender=os.getenv("MAIL_USERNAME"),
+                      recipients=[email])
+        msg.body = f"Hello {name},\n\nThank you for subscribing to hurricane alerts!"
+        mail.send(msg)
+        print("Email sent successfully!")
+
         return redirect('/')
+
     except Exception as e:
         print(f"Error: {e}")
         return "An error occurred while subscribing.", 500
 
+
+
+
+        
+        
 if __name__ == "__main__":
     app.run(debug=True)

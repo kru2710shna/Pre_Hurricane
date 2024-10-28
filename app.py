@@ -10,7 +10,7 @@ from geopy.distance import geodesic
 import pandas as pd
 import mysql.connector
 from flask_mail import Mail, Message
-from email_templates import subscription_thank_you_message
+from utils.email_templates import subscription_thank_you_message
 
 
    
@@ -19,8 +19,8 @@ app = Flask(__name__)
 load_dotenv()
     
     
-model = joblib.load("best_random_forest_model4.pkl")
-preprocessor = joblib.load("preprocessor4.pkl")
+model = joblib.load("Models/best_random_forest_model4.pkl")
+preprocessor = joblib.load("Models/preprocessor4.pkl")
 # Configure Flask-Mail
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
 app.config["MAIL_PORT"] = os.getenv("MAIL_PORT")
